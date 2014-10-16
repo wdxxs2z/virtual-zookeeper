@@ -1,0 +1,23 @@
+#!/bin/bash -e
+if [ -e $ZOOKEEPER_PEERS ] ; then 
+    echo "ZOOKEEPER_PEERS env missing";
+    exit 1;
+fi
+
+if [ -e $IP ] ; then 
+    echo "IP env missing";
+    exit 1;
+fi
+
+IFS=',' read -ra NODES <<< "$ZOOKEEPER_PEERS"
+counter=0;
+for i in "${NODES[@]}"; do
+    if [ "$i" = "$IP" ] ; then
+        echo $counter > /var/lib/zookeeper/myid;
+    fi
+
+    echo "server.$counter=$i:2888:3888" >> /opt/zookeeper-3.4.6/conf/zoo.cfg; 
+    let counter=$counter+1;
+done
+
+/opt/zookeeper-3.4.6/bin/zkServer.sh start-foreground
